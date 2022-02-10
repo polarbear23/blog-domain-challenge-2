@@ -60,6 +60,11 @@ const createPost = async (createdUser) => {
             comments: true,
             categories: true,
             user: true,
+            comments: {
+                include: {
+                    comments: true
+                }
+            }
         }
     })
     console.log("created post", createdPost);

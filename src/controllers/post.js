@@ -50,7 +50,12 @@ const getAllPosts = async (req, res) => {
     const createQueryObject = {
         include: {
             categories: true,
-            comments: true
+            comments: true,
+            comments: {
+                include: {
+                    comments: true
+                }
+            }
         },
         orderBy: orderBy ? {
             publishedAt: orderBy
@@ -70,7 +75,7 @@ const getAllPosts = async (req, res) => {
 
     const allPosts = await prisma.post.findMany(createQueryObject);
     console.log("getallposts", allPosts);
-    res.json({ data: { allPosts } });
+    return res.json({ data: { allPosts } });
 }
 
 const updatePost = async (req, res) => {
@@ -101,16 +106,49 @@ const updatePost = async (req, res) => {
                     }
                 })
             }
+        },
+        include: {
+            categories: true
         }
     }
     );
     console.log("update Post:", updatedPost);
-    res.json({ data: { updatedPost } });
+    return res.json({ data: { updatedPost } });
 }
 
+
+const deletePost = async (req, res) => {
+    const { postId } = req.params;
+    const parsedId = parseInt(postId);
+    const deletedComments = await prisma.comment.deleteMany( //deleting related comments
+        {
+            where: {
+                postId: parsedId
+            }
+        }
+    );
+    console.log("deleted Comments", deletedComments);
+
+    const deletedCategories = await prisma.categoriesOnPosts.deleteMany({ //deleting related category relations
+        where: {
+            postId: parsedId
+        }
+    })
+    console.log("delete CategoriesOnPost", deletedCategories);
+    const deletedPost = await prisma.post.delete({
+        where: {
+            id: parsedId
+        }
+    });
+
+    console.log("deleted Post", deletedPost);
+
+    return res.json({ data: { deletedPost } });
+}
 
 module.exports = {
     createPosts,
     getAllPosts,
-    updatePost
+    updatePost,
+    deletePost
 }
