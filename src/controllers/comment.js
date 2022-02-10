@@ -17,6 +17,9 @@ const createComment = async (req, res) => {
                     id: postId
                 }
             }
+        },
+        include: {
+            post: true
         }
     });
     let parent;
