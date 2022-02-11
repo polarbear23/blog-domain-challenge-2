@@ -42,12 +42,12 @@ const createPosts = async (req, res) => {
 
 
 const getAllPosts = async (req, res) => {
-    const { orderBy, limit } = req.query;
+    const { filterBy, orderBy, limit } = req.query;
     const { id } = req.params;
 
     console.log("query", req.params);
 
-    const createQueryObject = {
+    const createQueryObject = { //creates an object to use as the prisma query
         include: {
             categories: true,
             comments: true,
@@ -62,16 +62,19 @@ const getAllPosts = async (req, res) => {
         } : {}
     }
     if (limit) {
-        createObject.take = limit
+        createObject.take = limit //add a limit to the number of posts returned from query
     }
 
-    isNaN(parseInt(id)) ? createQueryObject.where = {
+    const whereQuery = isNaN(parseInt(id)) ? {
         user: {
             is: {
-                username: id
+                username: id //id is a name instead
             }
         }
     } : { userId: parseInt(id) };
+
+    whereQuery.NOT = filterBy === "isPublished" ? { publishedAt: null } : undefined;
+    createQueryObject.where = whereQuery; //add the where query to the query object
 
     const allPosts = await prisma.post.findMany(createQueryObject);
     console.log("getallposts", allPosts);
